@@ -108,20 +108,20 @@ interface ERC165 {
     function supportsInterface(bytes4 interfaceID) external view returns (bool);
 }
 
-interface ERC721TokenReceiver {
-    /// @notice Handle the receipt of an NFT
-    /// @dev The ERC721 smart contract calls this function on the
-    /// recipient after a `transfer`. This function MAY throw to revert and reject the transfer. Return
-    /// of other than the magic value MUST result in the transaction being reverted.
-    /// @notice The contract address is always the message sender. 
-    /// @param _operator The address which called `safeTransferFrom` function
-    /// @param _from The address which previously owned the token
-    /// @param _tokenId The NFT identifier which is being transferred
-    /// @param _data Additional data with no specified format
-    /// @return `bytes4(keccak256("onERC721Received(address,address,uint,bytes)"))`
-    /// unless throwing
-    function onERC721Received(address _operator, address _from, uint _tokenId, bytes _data) external returns(bytes4);
- }
+// interface ERC721TokenReceiver {
+//     /// @notice Handle the receipt of an NFT
+//     /// @dev The ERC721 smart contract calls this function on the
+//     /// recipient after a `transfer`. This function MAY throw to revert and reject the transfer. Return
+//     /// of other than the magic value MUST result in the transaction being reverted.
+//     /// @notice The contract address is always the message sender. 
+//     /// @param _operator The address which called `safeTransferFrom` function
+//     /// @param _from The address which previously owned the token
+//     /// @param _tokenId The NFT identifier which is being transferred
+//     /// @param _data Additional data with no specified format
+//     /// @return `bytes4(keccak256("onERC721Received(address,address,uint,bytes)"))`
+//     /// unless throwing
+//     function onERC721Received(address _operator, address _from, uint _tokenId, bytes _data) external returns(bytes4);
+//  }
 
 //interface TicketTokenInterface is ERC721 {
     /// @notice チケット共通プラットフォームが実装するべきチケットトークンのインターフェース。ERC721の拡張
@@ -428,5 +428,14 @@ contract TicketToken is ERC721 {
             return result;
         }
     }
-
+    
+    /// @notice issue a ticket token 
+    /// @param _ticketInternalId TicketIssuerが内部システムで管理している場合のID
+    /// @param _ticketCategoryName Ticketのカテゴリ(参照情報)
+    /// @param _IPFSHashFirst IPFSに格納している情報のハッシュにおける先頭32byte分
+    /// @param _IPFSHashSecond IPFSに格納している情報のハッシュにおける後半32byte分
+    /// @dev 基本的にはサービスプロバイダーの保有するアカウントだけがticketの発行を可能
+    function issueTicket(uint _ticketInternalId,bytes32 _ticketCategoryName,bytes32 _IPFSHashFirst,bytes32 _IPFSHashSecond) external {
+        
+    }
 }
