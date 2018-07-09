@@ -135,8 +135,6 @@ contract TicketToken is ERC721 {
         uint ticketId ;
         // ID for management in internal systems
         uint ticketInternalId ;
-        // owner address
-        address ticketOwner ;
         // ticket issuer address
         address ticketIssuer ;
         // ticket issue time
@@ -151,11 +149,24 @@ contract TicketToken is ERC721 {
         uint ticketStatus ;
     }
     Ticket[] tickets ;
+    
+    // --constant--
+    uint constant TICKET_STATUS_ACTIVE = 0;
+    uint constant TICKET_STATUS_INACTIVE = 9;
+    
 
     // --index--
+    // チケットIDからownerを引くインデックス
     mapping (uint => address) public ticketToOwnerIndex ;
+    // ownerからチケットIDを引くインデックス
     mapping (address => uint) public ownerToTicketIndex ;
+    // ownerのもつチケットIDリスト
+    mapping (address => uint[]) public ownedTicketList ;
+    // ownerのもつチケットのIDリストにおける位置を引くインデックス
+    mapping(uint => uint) private ownedTicketListIndex ;
+    // チケットIDからApproved Accountを引くインデックス
     mapping (uint => address) public ticketToApprovedIndex ;
+    // owner addressから保有するチケットの件数を引くインデックス（残高）
     mapping (address => uint) public ownershipTicketCount ;	
     
 	// --event--
@@ -194,13 +205,46 @@ contract TicketToken is ERC721 {
         return ticketToOwnerIndex[_tokenId] == _claimant;
     }
     
+  /// @notice Internal function to add a ticket ID to the list of a given address
+  /// @param _to address representing the new owner of the given ticket ID
+  /// @param _ticketId uint ID of the token to be added to the ticket list of the given address
+  function _addTicket(address _to, uint256 _ticketId) private {
+    ticketToOwnerIndex[_ticketId] = _to;
+    uint length = balanceOf(_to);
+    ownedTicketList[_to].push(_ticketId);
+    //ownedTicketListIndexは当該チケットIdのownedTicketListにおけるインデックスを表現
+    ownedTicketListIndex[_ticketId] = length;
+  }
+ 
+  /// @notice Internal function to remove a ticket ID from the list of a given address
+  /// @param _from address representing the previous owner of the given token ID
+  /// @param _ticketId uint256 ID of the token to be removed from the tokens list of the given address
+  function _removeTicket(address _from, uint256 _ticketId) private {
+    uint ticketIndex = ownedTicketListIndex[_ticketId];
+    uint lastTicketIndex = balanceOf(_from)-1;
+    uint lastTicket = ownedTicketList[_from][lastTicketIndex];
+
+    ticketToOwnerIndex[_ticketId] = 0;
+    ownedTicketList[_from][ticketIndex] = lastTicket;
+    ownedTicketList[_from][lastTicketIndex] = 0;
+    // 削除対象のTicketと最後のチケットをスワップして、最後のチケットを初期化することによって、リストからの削除を実現している
+    // 普通に要素削除しようとすると各要素のインデックスを１ずつ繰り上げる更新をしなくてはならず、
+    // そうするとContractにおける計算量が増えてしまうため、あえてこういったやり方をする
+    
+    ownedTicketList[_from].length--;
+    ownedTicketListIndex[_ticketId] = 0;
+    ownedTicketListIndex[lastTicket] = ticketIndex;
+  }    
     /// @dev Assigns ownership of a specific Kitty to an address.
     function _transfer(address _from, address _to, uint _tokenId) internal {
         // transfer ownership
-        ticketToOwnerIndex[_tokenId] = _to;
+        require(ticketToOwnerIndex[ _tokenId] == address(0));
+        _addTicket(_to,_tokenId) ;
         ownershipTicketCount[_to]++;
         // When creating new tickets _from is 0x0, but we can't account that address.
         if (_from != address(0)) {
+            require(_owns(_from,_tokenId));
+            _removeTicket(_from,_tokenId) ;
             ownershipTicketCount[_from]--;
    		     // clear any previously approved ownership exchange
             delete ticketToApprovedIndex[_tokenId];
@@ -436,6 +480,18 @@ contract TicketToken is ERC721 {
     /// @param _IPFSHashSecond IPFSに格納している情報のハッシュにおける後半32byte分
     /// @dev 基本的にはサービスプロバイダーの保有するアカウントだけがticketの発行を可能
     function issueTicket(uint _ticketInternalId,bytes32 _ticketCategoryName,bytes32 _IPFSHashFirst,bytes32 _IPFSHashSecond) external {
+        // ticketIdは1からはじめる
+        uint newTicketId = tickets.length + 1;
         
+        // チケット情報の作成
+        tickets[newTicketId].ticketInternalId = _ticketInternalId ;
+        tickets[newTicketId].ticketCategoryName = _ticketCategoryName ;
+        tickets[newTicketId].IPFSHashFirst = _IPFSHashFirst ;
+        tickets[newTicketId].IPFSHashSecond = _IPFSHashSecond ;
+        tickets[newTicketId].ticketIssuer = msg.sender ;
+        tickets[newTicketId].issueTime = block.timestamp ;
+        tickets[newTicketId].ticketStatus = TICKET_STATUS_ACTIVE ;
+        
+        _addTicket(msg.sender,newTicketId) ;
     }
 }
