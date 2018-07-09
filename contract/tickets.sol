@@ -236,17 +236,16 @@ contract TicketToken is ERC721 {
     /// @dev Assigns ownership of a specific Kitty to an address.
     function _transfer(address _from, address _to, uint _tokenId) internal {
         // transfer ownership
-        require(ticketToOwnerIndex[ _tokenId] == address(0));
         _addTicket(_to,_tokenId) ;
         // When creating new tickets _from is 0x0, but we can't account that address.
         if (_from != address(0)) {
             require(_owns(_from,_tokenId));
             _removeTicket(_from,_tokenId) ;
-   		     // clear any previously approved ownership exchange
+   		    // clear any previously approved ownership exchange
             delete ticketToApprovedIndex[_tokenId];
         }
         // Emit the transfer event.
-        Transfer(_from, _to, _tokenId);
+        //emit Transfer(_from, _to, _tokenId);
     }
     /// @dev Marks an address as being approved for transferFrom(), overwriting any previous
     ///  approval. Setting _approved to address(0) clears all transfer approval.
@@ -333,7 +332,7 @@ contract TicketToken is ERC721 {
         _approve(_tokenId, _to);
 
         // Emit approval event.
-        Approval(msg.sender, _to, _tokenId);
+        emit Approval(msg.sender, _to, _tokenId);
     }
 
 
