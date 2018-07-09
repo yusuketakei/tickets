@@ -148,7 +148,7 @@ contract TicketToken is ERC721 {
         // status
         uint ticketStatus ;
     }
-    Ticket[] tickets ;
+    Ticket[] private tickets ;
     
     // --constant--
     uint constant TICKET_STATUS_ACTIVE = 0;
@@ -166,8 +166,6 @@ contract TicketToken is ERC721 {
     mapping(uint => uint) private ownedTicketListIndex ;
     // チケットIDからApproved Accountを引くインデックス
     mapping (uint => address) public ticketToApprovedIndex ;
-    // owner addressから保有するチケットの件数を引くインデックス（残高）
-    mapping (address => uint) public ownershipTicketCount ;	
     
 	// --event--
     event Transfer(address from, address to, uint256 tokenId);
@@ -208,7 +206,7 @@ contract TicketToken is ERC721 {
   /// @notice Internal function to add a ticket ID to the list of a given address
   /// @param _to address representing the new owner of the given ticket ID
   /// @param _ticketId uint ID of the token to be added to the ticket list of the given address
-  function _addTicket(address _to, uint256 _ticketId) private {
+  function _addTicket(address _to, uint256 _ticketId) internal {
     ticketToOwnerIndex[_ticketId] = _to;
     uint length = balanceOf(_to);
     ownedTicketList[_to].push(_ticketId);
@@ -219,7 +217,7 @@ contract TicketToken is ERC721 {
   /// @notice Internal function to remove a ticket ID from the list of a given address
   /// @param _from address representing the previous owner of the given token ID
   /// @param _ticketId uint256 ID of the token to be removed from the tokens list of the given address
-  function _removeTicket(address _from, uint256 _ticketId) private {
+  function _removeTicket(address _from, uint256 _ticketId) internal {
     uint ticketIndex = ownedTicketListIndex[_ticketId];
     uint lastTicketIndex = balanceOf(_from)-1;
     uint lastTicket = ownedTicketList[_from][lastTicketIndex];
@@ -240,12 +238,10 @@ contract TicketToken is ERC721 {
         // transfer ownership
         require(ticketToOwnerIndex[ _tokenId] == address(0));
         _addTicket(_to,_tokenId) ;
-        ownershipTicketCount[_to]++;
         // When creating new tickets _from is 0x0, but we can't account that address.
         if (_from != address(0)) {
             require(_owns(_from,_tokenId));
             _removeTicket(_from,_tokenId) ;
-            ownershipTicketCount[_from]--;
    		     // clear any previously approved ownership exchange
             delete ticketToApprovedIndex[_tokenId];
         }
@@ -297,7 +293,7 @@ contract TicketToken is ERC721 {
     /// @param _owner The owner address to check.
     /// @dev Required for ERC-721 compliance
     function balanceOf(address _owner) public view returns (uint256 count) {
-        return ownershipTicketCount[_owner];
+        return ownedTicketList[_owner].length;
     }
 
     function transfer(
@@ -483,14 +479,16 @@ contract TicketToken is ERC721 {
         // ticketIdは1からはじめる
         uint newTicketId = tickets.length + 1;
         
-        // チケット情報の作成
-        tickets[newTicketId].ticketInternalId = _ticketInternalId ;
-        tickets[newTicketId].ticketCategoryName = _ticketCategoryName ;
-        tickets[newTicketId].IPFSHashFirst = _IPFSHashFirst ;
-        tickets[newTicketId].IPFSHashSecond = _IPFSHashSecond ;
-        tickets[newTicketId].ticketIssuer = msg.sender ;
-        tickets[newTicketId].issueTime = block.timestamp ;
-        tickets[newTicketId].ticketStatus = TICKET_STATUS_ACTIVE ;
+        // // チケット情報の作成
+        Ticket newTicket ;
+        newTicket.ticketInternalId = _ticketInternalId ;
+        newTicket.ticketCategoryName = _ticketCategoryName ;
+        newTicket.IPFSHashFirst = _IPFSHashFirst ;
+        newTicket.IPFSHashSecond = _IPFSHashSecond ;
+        newTicket.ticketIssuer = msg.sender ;
+        newTicket.issueTime = block.timestamp ;
+        newTicket.ticketStatus = TICKET_STATUS_ACTIVE ;
+        tickets.push(newTicket) ;
         
         _addTicket(msg.sender,newTicketId) ;
     }
