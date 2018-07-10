@@ -262,7 +262,7 @@ contract TicketToken is ERC721 {
         return ticketToApprovedIndex[_tokenId] == _claimant;
     }
 
-    function _transferFrom(address _to,address _from,uint256 _tokenId) internal {
+    function _transferFrom(address _from,address _to,uint256 _tokenId) internal {
         // Safety check to prevent against an unexpected 0x0 default.
         require(_to != address(0));
         // Disallow transfers to this contract to prevent accidental misuse.
@@ -331,7 +331,7 @@ contract TicketToken is ERC721 {
         _approve(_tokenId, _to);
 
         // Emit approval event.
-        emit Approval(msg.sender, _to, _tokenId);
+        //emit Approval(msg.sender, _to, _tokenId);
     }
 
 
