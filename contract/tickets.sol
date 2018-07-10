@@ -3,7 +3,7 @@ pragma solidity ^0.4.20;
 /// @title ERC-721 Non-Fungible Token Standard
 /// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
 ///  Note: the ERC-165 identifier for this interface is 0x80ac58cd
-interface ERC721 /* is ERC165 */ {
+contract ERC721 /* is ERC165 */ {
     /// @dev This emits when ownership of any NFT changes by any mechanism.
     ///  This event emits when NFTs are created (`from` == 0) and destroyed
     ///  (`to` == 0). Exception: during contract creation, any number of NFTs
@@ -98,7 +98,7 @@ interface ERC721 /* is ERC165 */ {
     function isApprovedForAll(address _owner, address _operator) external view returns (bool);
 }
 
-interface ERC165 {
+contract ERC165 {
     /// @notice Query if a contract implements an interface
     /// @param interfaceID The interface identifier, as specified in ERC-165
     /// @dev Interface identification is specified in ERC-165. This function
@@ -108,7 +108,7 @@ interface ERC165 {
     function supportsInterface(bytes4 interfaceID) external view returns (bool);
 }
 
-// interface ERC721TokenReceiver {
+// contract ERC721TokenReceiver {
 //     /// @notice Handle the receipt of an NFT
 //     /// @dev The ERC721 smart contract calls this function on the
 //     /// recipient after a `transfer`. This function MAY throw to revert and reject the transfer. Return
@@ -123,7 +123,7 @@ interface ERC165 {
 //     function onERC721Received(address _operator, address _from, uint _tokenId, bytes _data) external returns(bytes4);
 //  }
 
-//interface TicketTokenInterface is ERC721 {
+//contract TicketTokenInterface is ERC721 {
     /// @notice チケット共通プラットフォームが実装するべきチケットトークンのインターフェース。ERC721の拡張
 //}
 
@@ -208,7 +208,7 @@ contract TicketToken is ERC721 {
   /// @param _ticketId uint ID of the token to be added to the ticket list of the given address
   function _addTicket(address _to, uint256 _ticketId) internal {
     ticketToOwnerIndex[_ticketId] = _to;
-    uint length = balanceOf(_to);
+    uint length = _balanceOf(_to);
     ownedTicketList[_to].push(_ticketId);
     //ownedTicketListIndexは当該チケットIdのownedTicketListにおけるインデックスを表現
     ownedTicketListIndex[_ticketId] = length;
@@ -219,7 +219,7 @@ contract TicketToken is ERC721 {
   /// @param _ticketId uint256 ID of the token to be removed from the tokens list of the given address
   function _removeTicket(address _from, uint256 _ticketId) internal {
     uint ticketIndex = ownedTicketListIndex[_ticketId];
-    uint lastTicketIndex = balanceOf(_from)-1;
+    uint lastTicketIndex = _balanceOf(_from)-1;
     uint lastTicket = ownedTicketList[_from][lastTicketIndex];
 
     ticketToOwnerIndex[_ticketId] = 0;
@@ -286,12 +286,19 @@ contract TicketToken is ERC721 {
         //   require(tokenReceiverResponse == bytes4(keccak256("onERC721Received(address,uint256,bytes)")));
         // }
     }
-
-    /// @notice Returns the number of Kitties owned by a specific address.
+    
+    /// @notice Returns the number of Tickets owned by a specific address.
     /// @param _owner The owner address to check.
     /// @dev Required for ERC-721 compliance
-    function balanceOf(address _owner) public view returns (uint256 count) {
+    function _balanceOf(address _owner) internal view returns (uint256 count) {
         return ownedTicketList[_owner].length;
+    }
+
+    /// @notice Returns the number of Tickets owned by a specific address.
+    /// @param _owner The owner address to check.
+    /// @dev Required for ERC-721 compliance
+    function balanceOf(address _owner) external view returns (uint256 count) {
+        return _balanceOf(_owner);
     }
 
     function transfer(
@@ -338,7 +345,7 @@ contract TicketToken is ERC721 {
     ///  @notice Gets the approved address to take ownership of a given token ID
     ///  @param _tokenId uint256 ID of the token to query the approval of
     ///  @return address currently approved to take ownership of the given token ID
-    function getApproved(uint256 _tokenId) public view returns (address)
+    function getApproved(uint256 _tokenId) external view returns (address)
     {
         return ticketToApprovedIndex[_tokenId];
     }
@@ -442,7 +449,7 @@ contract TicketToken is ERC721 {
     ///  but it also returns a dynamic array, which is only supported for web3 calls, and
     ///  not contract-to-contract calls.
     function tokensOfOwner(address _owner) external view returns(uint256[] ownerTokens) {
-        uint256 tokenCount = balanceOf(_owner);
+        uint256 tokenCount = _balanceOf(_owner);
 
         if (tokenCount == 0) {
             // Return an empty array
