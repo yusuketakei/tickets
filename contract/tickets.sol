@@ -198,7 +198,7 @@ contract TicketToken is ERC721 {
 
     /// @dev チケットIDの所有者チェック
     /// @param _claimant the address we are validating against.
-    /// @param _tokenId 
+    /// @param _tokenId tokenId
     function _owns(address _claimant, uint _tokenId) internal view returns (bool) {
         return ticketToOwnerIndex[_tokenId] == _claimant;
     }
@@ -235,15 +235,14 @@ contract TicketToken is ERC721 {
   }    
     /// @dev Assigns ownership of a specific Kitty to an address.
     function _transfer(address _from, address _to, uint _tokenId) internal {
+        require(_owns(_from,_tokenId));
         // transfer ownership
+        _removeTicket(_from,_tokenId) ;
         _addTicket(_to,_tokenId) ;
-        // When creating new tickets _from is 0x0, but we can't account that address.
-        if (_from != address(0)) {
-            require(_owns(_from,_tokenId));
-            _removeTicket(_from,_tokenId) ;
-   		    // clear any previously approved ownership exchange
-            delete ticketToApprovedIndex[_tokenId];
-        }
+
+   		// clear any previously approved ownership exchange
+        delete ticketToApprovedIndex[_tokenId];
+        
         // Emit the transfer event.
         //emit Transfer(_from, _to, _tokenId);
     }
@@ -433,7 +432,7 @@ contract TicketToken is ERC721 {
     {
         owner = ticketToOwnerIndex[_tokenId];
 
-        require(owner != address(0));
+        //require(owner != address(0));
     }
     
     /// @notice Returns a list of all Ticket IDs assigned to an address.
