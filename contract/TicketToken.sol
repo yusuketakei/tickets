@@ -427,7 +427,7 @@ contract TicketToken is ERC721 {
     /// @notice Returns the total number of Tickets currently in existence.
     /// @dev Required for ERC-721 compliance.
     function totalSupply() public view returns (uint) {
-        return tickets.length - 1;
+        return tickets.length;
     }
     
     /// @notice Returns the address currently assigned ownership of a given Ticket.
