@@ -473,7 +473,32 @@ contract TicketToken is ERC721 {
             return result;
         }
     }
-    
+
+    /// @notice Returns a Ticket Information of given ID
+    /// @param _ticketId givenId
+    /// @dev This method MUST NEVER be called by smart contract code. First, it's fairly
+    ///  expensive (it walks the entire Ticket array looking for tickets belonging to owner),
+    ///  but it also returns a dynamic array, which is only supported for web3 calls, and
+    ///  not contract-to-contract calls.
+    function getTicketInfoById(uint _ticketId) external view returns(bytes32[7] ticketInfo) {
+        //ticketIdは1から始めるので、添え字は-1
+        uint ticketIndex = _ticketId-1 ;
+        
+        //チェック
+        require(tickets[ticketIndex].ticketId != 0) ;
+
+        ticketInfo[0] = (bytes32)(tickets[ticketIndex].ticketId) ;
+        ticketInfo[1] = (bytes32)(tickets[ticketIndex].ticketInternalId) ;
+        ticketInfo[2] = tickets[ticketIndex].ticketCategoryName ;
+        ticketInfo[3] = tickets[ticketIndex].IPFSHashFirst ;
+        ticketInfo[4] = tickets[ticketIndex].IPFSHashSecond ;
+        ticketInfo[5] = (bytes32)(tickets[ticketIndex].ticketIssuer) ;
+        ticketInfo[6] = bytes32(tickets[ticketIndex].issueTime) ;       
+
+        return ticketInfo ;
+    }
+
+
     /// @notice issue a ticket token 
     /// @param _ticketInternalId TicketIssuerが内部システムで管理している場合のID
     /// @param _ticketCategoryName Ticketのカテゴリ(参照情報)
@@ -485,7 +510,8 @@ contract TicketToken is ERC721 {
         uint newTicketId = tickets.length + 1;
         
         // // チケット情報の作成
-        Ticket newTicket ;
+        Ticket memory newTicket ;
+        newTicket.ticketId = newTicketId ;
         newTicket.ticketInternalId = _ticketInternalId ;
         newTicket.ticketCategoryName = _ticketCategoryName ;
         newTicket.IPFSHashFirst = _IPFSHashFirst ;
