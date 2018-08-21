@@ -1,526 +1,649 @@
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.10;
 
-/// @title ERC-721 Non-Fungible Token Standard
-/// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
-///  Note: the ERC-165 identifier for this interface is 0x80ac58cd
-contract ERC721 /* is ERC165 */ {
-    /// @dev This emits when ownership of any NFT changes by any mechanism.
-    ///  This event emits when NFTs are created (`from` == 0) and destroyed
-    ///  (`to` == 0). Exception: during contract creation, any number of NFTs
-    ///  may be created and assigned without emitting Transfer. At the time of
-    ///  any transfer, the approved address for that NFT (if any) is reset to none.
-    event Transfer(address indexed _from, address indexed _to, uint indexed _tokenId);
+contract EMCUR {
 
-    /// @dev This emits when the approved address for an NFT is changed or
-    ///  reaffirmed. The zero address indicates there is no approved address.
-    ///  When a Transfer event emits, this also indicates that the approved
-    ///  address for that NFT (if any) is reset to none.
-    event Approval(address indexed _owner, address indexed _approved, uint indexed _tokenId);
+// --ストラクチャ定義 Start--
+	// ユーザ情報
+	struct User {
+		// ユーザID
+		uint userId;
+		// ユーザ名
+		bytes32 userName;
+        // ユーザーアカウントアドレス
+        address userAccountAddress;
+        // 削除フラグ
+		bool delFlag;
+	}
+	// ユーザグループ情報
+	struct UserGroup {
+		// ユーザグループID
+		uint userGroupId;
+		// ユーザグループ名
+		bytes32 userGroupName;
+        // 削除フラグ
+		bool delFlag;
+	}
 
-    /// @dev This emits when an operator is enabled or disabled for an owner.
-    ///  The operator can manage all NFTs of the owner.
-    event ApprovalForAll(address indexed _owner, address indexed _operator, bool _approved);
+	// 口座情報
+	struct Account {
+	    // 店番口座番号
+	    bytes32 branchAccountNo; 
+	    // 店番
+	    bytes32 branchNo;
+		// 口座番号
+		bytes32 accountNo;
+        // 口座名義
+        bytes32 accountHolderName;
+		// 口座種別
+		uint accountType;
+		// 通貨
+		bytes32 currency;
+		// 残高
+		uint balance;
+		// 作成タイムスタンプ
+		uint createTimestamp;
+		// 更新タイムスタンプ
+		uint updateTimestamp;
+        // 削除フラグ
+        bool delFlag;
+	}
 
-    /// @notice Count all NFTs assigned to an owner
-    /// @dev NFTs assigned to the zero address are considered invalid, and this
-    ///  function throws for queries about the zero address.
-    /// @param _owner An address for whom to query the balance
-    /// @return The number of NFTs owned by `_owner`, possibly zero
-    function balanceOf(address _owner) external view returns (uint);
-
-    /// @notice Find the owner of an NFT
-    /// @dev NFTs assigned to zero address are considered invalid, and queries
-    ///  about them do throw.
-    /// @param _tokenId The identifier for an NFT
-    /// @return The address of the owner of the NFT
-    function ownerOf(uint _tokenId) external view returns (address);
-
-    /// @notice Transfers the ownership of an NFT from one address to another address
-    /// @dev Throws unless `msg.sender` is the current owner, an authorized
-    ///  operator, or the approved address for this NFT. Throws if `_from` is
-    ///  not the current owner. Throws if `_to` is the zero address. Throws if
-    ///  `_tokenId` is not a valid NFT. When transfer is complete, this function
-    ///  checks if `_to` is a smart contract (code size > 0). If so, it calls
-    ///  `onERC721Received` on `_to` and throws if the return value is not
-    ///  `bytes4(keccak256("onERC721Received(address,address,uint,bytes)"))`.
-    /// @param _from The current owner of the NFT
-    /// @param _to The new owner
-    /// @param _tokenId The NFT to transfer
-    /// @param data Additional data with no specified format, sent in call to `_to`
-    function safeTransferFrom(address _from, address _to, uint _tokenId, bytes data) external payable;
-
-    /// @notice Transfers the ownership of an NFT from one address to another address
-    /// @dev This works identically to the other function with an extra data parameter,
-    ///  except this function just sets data to ""
-    /// @param _from The current owner of the NFT
-    /// @param _to The new owner
-    /// @param _tokenId The NFT to transfer
-    function safeTransferFrom(address _from, address _to, uint _tokenId) external payable;
-
-    /// @notice Transfer ownership of an NFT -- THE CALLER IS RESPONSIBLE
-    ///  TO CONFIRM THAT `_to` IS CAPABLE OF RECEIVING NFTS OR ELSE
-    ///  THEY MAY BE PERMANENTLY LOST
-    /// @dev Throws unless `msg.sender` is the current owner, an authorized
-    ///  operator, or the approved address for this NFT. Throws if `_from` is
-    ///  not the current owner. Throws if `_to` is the zero address. Throws if
-    ///  `_tokenId` is not a valid NFT.
-    /// @param _from The current owner of the NFT
-    /// @param _to The new owner
-    /// @param _tokenId The NFT to transfer
-    function transferFrom(address _from, address _to, uint _tokenId) external payable;
-
-    /// @notice Set or reaffirm the approved address for an NFT
-    /// @dev The zero address indicates there is no approved address.
-    /// @dev Throws unless `msg.sender` is the current NFT owner, or an authorized
-    ///  operator of the current owner.
-    /// @param _approved The new approved NFT controller
-    /// @param _tokenId The NFT to approve
-    function approve(address _approved, uint _tokenId) external payable;
-
-    /// @notice Enable or disable approval for a third party ("operator") to manage
-    ///  all of `msg.sender`'s assets.
-    /// @dev Emits the ApprovalForAll event. The contract MUST allow
-    ///  multiple operators per owner.
-    /// @param _operator Address to add to the set of authorized operators.
-    /// @param _approved True if the operator is approved, false to revoke approval
-    function setApprovalForAll(address _operator, bool _approved) external;
-
-    /// @notice Get the approved address for a single NFT
-    /// @dev Throws if `_tokenId` is not a valid NFT
-    /// @param _tokenId The NFT to find the approved address for
-    /// @return The approved address for this NFT, or the zero address if there is none
-    function getApproved(uint _tokenId) external view returns (address);
-
-    /// @notice Query if an address is an authorized operator for another address
-    /// @param _owner The address that owns the NFTs
-    /// @param _operator The address that acts on behalf of the owner
-    /// @return True if `_operator` is an approved operator for `_owner`, false otherwise
-    function isApprovedForAll(address _owner, address _operator) external view returns (bool);
-}
-
-contract ERC165 {
-    /// @notice Query if a contract implements an interface
-    /// @param interfaceID The interface identifier, as specified in ERC-165
-    /// @dev Interface identification is specified in ERC-165. This function
-    ///  uses less than 30,000 gas.
-    /// @return `true` if the contract implements `interfaceID` and
-    ///  `interfaceID` is not 0xffffffff, `false` otherwise
-    function supportsInterface(bytes4 interfaceID) external view returns (bool);
-}
-
-// contract ERC721TokenReceiver {
-//     /// @notice Handle the receipt of an NFT
-//     /// @dev The ERC721 smart contract calls this function on the
-//     /// recipient after a `transfer`. This function MAY throw to revert and reject the transfer. Return
-//     /// of other than the magic value MUST result in the transaction being reverted.
-//     /// @notice The contract address is always the message sender. 
-//     /// @param _operator The address which called `safeTransferFrom` function
-//     /// @param _from The address which previously owned the token
-//     /// @param _tokenId The NFT identifier which is being transferred
-//     /// @param _data Additional data with no specified format
-//     /// @return `bytes4(keccak256("onERC721Received(address,address,uint,bytes)"))`
-//     /// unless throwing
-//     function onERC721Received(address _operator, address _from, uint _tokenId, bytes _data) external returns(bytes4);
-//  }
-
-//contract TicketTokenInterface is ERC721 {
-    /// @notice チケット共通プラットフォームが実装するべきチケットトークンのインターフェース。ERC721の拡張
-//}
-
-contract TicketToken is ERC721 {
-    // TicketTokenを実装するabstract contract
-    //-- ストラクチャ --
-    struct Ticket {
-        // ID
-        uint ticketId ;
-        // ID for management in internal systems
-        uint ticketInternalId ;
-        // ticket issuer address
-        address ticketIssuer ;
-        // ticket issue time
-        uint issueTime ;        
-        // ticket実装におけるカテゴリ（福祉、子育てなど）
-        bytes32 ticketCategoryName ;
-        // IPFS用ハッシュ前半32bit
-        bytes32 IPFSHashFirst ;
-        // IPFS用ハッシュ後半32bit
-        bytes32 IPFSHashSecond ;        
-        // status
-        uint ticketStatus ;
-    }
-    Ticket[] private tickets ;
-    
-    // --constant--
-    uint constant TICKET_STATUS_ACTIVE = 0;
-    uint constant TICKET_STATUS_INACTIVE = 9;
-    
-
-    // --index--
-    // チケットIDからownerを引くインデックス
-    mapping (uint => address) public ticketToOwnerIndex ;
-    // ownerからチケットIDを引くインデックス
-    mapping (address => uint) public ownerToTicketIndex ;
-    // ownerのもつチケットIDリスト
-    mapping (address => uint[]) public ownedTicketList ;
-    // ownerのもつチケットのIDリストにおける位置を引くインデックス
-    mapping(uint => uint) private ownedTicketListIndex ;
-    // チケットIDからApproved Accountを引くインデックス
-    mapping (uint => address) public ticketToApprovedIndex ;
-    
-	// --event--
-    event Transfer(address from, address to, uint256 tokenId);
-    event Approval(address owner, address approved, uint256 tokenId);
-    event ApprovalForAll(address indexed _owner, address indexed _operator, bool _approved);
+	// 送金依頼情報
+	struct RemmitanceRequest {
+        // トランザクションID
+        uint requestId;
+        // 種別
+        uint requestType;
+        // 送金元店番
+        bytes32 branchNo;
+        // 送金元口座番号
+        bytes32 accountNo;
+        // 送金元口座名義
+        bytes32 accountHolderName;
+        // 送金元通貨
+        bytes32 fromCurrency;
+        // 送金先通貨
+        bytes32 toCurrency;
+        // レート
+        bytes32 rate;
+        // 送金元元本
+        uint fromAmount;
+        // 送金先元本
+        uint toAmount;
+        // 申込日
+        bytes32 applicationDate;
+        // 実行予定日
+        bytes32 valueDate;
+        // タイムスタンプ
+        uint timestamp;
+        // ipfsハッシュ1
+        bytes32 ipfsHashFirst ;
+        // ipfsハッシュ2
+        bytes32 ipfsHashSecond ;
+	}
+	// 処理フローの親
+	struct ProcessFlow {
+	    // id
+	    uint processFlowId;
+	    // requestId
+	    uint requestId;
+	}
+	// 各プロセス
+	struct Process {
+	    // processId
+	    uint processId;
+	    // flow id
+	    uint processFlowId;
+	    // processNumber
+	    uint processNumber;
+	    // 操作可能なUserGroupID
+	    uint targetUserGroupId;
+	    // 前提となるprocessNumber
+	    uint[MAX_PREV_PROCESS_NUM] prevProcessNumber ;
+	    // status
+	    uint status;
+	    // 処理時のタイムスタンプ
+	    uint doneTimestamp;
+	    // 処理時のユーザーID
+	    uint doneUserId;
+	    // ipfsハッシュ1
+	    bytes32 ipfsHashFirst;
+	    // ipfsハッシュ2
+	    bytes32 ipfsHashSecond;
+	}
 	
-    // --support interface checking--
-    bytes4 constant InterfaceSignature_ERC165 =
-        bytes4(keccak256('supportsInterface(bytes4)'));
+	//LinkedIndexListの要素
+	struct LinkedIndexlement {
+	    //前の要素へのリンク(1つ目のmappingのキー)
+	    string prevElementLink ;
+	    //次の要素へのリンク(mappingのキー)
+	    string nextElementLink ;
+	    //インデックス
+	    uint index ;
+	}
+	
+	//LinkedIndexListのMaster
+	struct LinkedIndexMaster {
+	    //リストの最初の要素
+	    string firstElementKey ;
+	    //リストの最後の要素
+	    string lastElementKey ;
+	}
+	
+// --ストラクチャ定義 End--
 
-    bytes4 constant InterfaceSignature_ERC721 =
-        bytes4(keccak256('name()')) ^
-        bytes4(keccak256('symbol()')) ^
-        bytes4(keccak256('totalSupply()')) ^
-        bytes4(keccak256('balanceOf(address)')) ^
-        bytes4(keccak256('ownerOf(uint)')) ^
-        bytes4(keccak256('approve(address,uint)')) ^
-        bytes4(keccak256('transfer(address,uint)')) ^
-        bytes4(keccak256('transferFrom(address,address,uint)')) ^
-        bytes4(keccak256('tokensOfOwner(address)')) ^
-        bytes4(keccak256('tokenMetadata(uint,string)'));
-
-    /// @notice Introspection interface as per ERC-165 (https://github.com/ethereum/EIPs/issues/165).
-    ///  Returns true for any standardized interfaces implemented by this contract. We implement
-    ///  ERC-165 (obviously!) and ERC-721.
-    function supportsInterface(bytes4 _interfaceID) external view returns (bool)
-    {
-        return ((_interfaceID == InterfaceSignature_ERC165) || (_interfaceID == InterfaceSignature_ERC721));
-    }
-
-    /// @dev チケットIDの所有者チェック
-    /// @param _claimant the address we are validating against.
-    /// @param _tokenId tokenId
-    function _owns(address _claimant, uint _tokenId) internal view returns (bool) {
-        return ticketToOwnerIndex[_tokenId] == _claimant;
-    }
+// --定数定義 Start--
+    // 種別(デフォルト)
+    uint constant TYPE_DEF = 0;
+    // processflowに設定できるプロセスの最大数
+    uint constant MAX_PROCESS_NUM =20;
+    // processに設定する前提プロセスの最大数
+    uint constant MAX_PREV_PROCESS_NUM =5;
+    //processのステータス（未着手)
+    uint constant PROC_STATUS_WAITING=0;
     
-  /// @notice Internal function to add a ticket ID to the list of a given address
-  /// @param _to address representing the new owner of the given ticket ID
-  /// @param _ticketId uint ID of the token to be added to the ticket list of the given address
-  function _addTicket(address _to, uint256 _ticketId) internal {
-    ticketToOwnerIndex[_ticketId] = _to;
-    uint length = _balanceOf(_to);
-    ownedTicketList[_to].push(_ticketId);
-    //ownedTicketListIndexは当該チケットIdのownedTicketListにおけるインデックスを表現
-    ownedTicketListIndex[_ticketId] = length;
-  }
- 
-  /// @notice Internal function to remove a ticket ID from the list of a given address
-  /// @param _from address representing the previous owner of the given token ID
-  /// @param _ticketId uint256 ID of the token to be removed from the tokens list of the given address
-  function _removeTicket(address _from, uint256 _ticketId) internal {
-    uint ticketIndex = ownedTicketListIndex[_ticketId];
-    uint lastTicketIndex = _balanceOf(_from)-1;
-    uint lastTicket = ownedTicketList[_from][lastTicketIndex];
-
-    ticketToOwnerIndex[_ticketId] = 0;
-    ownedTicketList[_from][ticketIndex] = lastTicket;
-    ownedTicketList[_from][lastTicketIndex] = 0;
-    // 削除対象のTicketと最後のチケットをスワップして、最後のチケットを初期化することによって、リストからの削除を実現している
-    // 普通に要素削除しようとすると各要素のインデックスを１ずつ繰り上げる更新をしなくてはならず、
-    // そうするとContractにおける計算量が増えてしまうため、あえてこういったやり方をする
+    // --LinkedIndexListのキー--
+    // UserGroupとStatusからProcessを探すインデックスのタイプ
+    // 2byte type,4byte UserGroupId,1byte status
+    string constant INDEX_TYPE_PROCESS_BY_USERGROUP_STATUS = "a1";
     
-    ownedTicketList[_from].length--;
-    ownedTicketListIndex[_ticketId] = 0;
-    ownedTicketListIndex[lastTicket] = ticketIndex;
-  }    
-    /// @dev Assigns ownership of a specific Kitty to an address.
-    function _transfer(address _from, address _to, uint _tokenId) internal {
-        require(_owns(_from,_tokenId));
-        // transfer ownership
-        _removeTicket(_from,_tokenId) ;
-        _addTicket(_to,_tokenId) ;
+// --定数定義 End--
 
-   		// clear any previously approved ownership exchange
-        delete ticketToApprovedIndex[_tokenId];
+// --変数定義 Start--
+    //userId→User
+	mapping (uint => User) userList;
+    //branchAccountNo→Account
+    mapping (bytes32 => Account) accountList;
+    //requestId→RemmitanceRequest
+	mapping (uint => RemmitanceRequest) remmitanceRequestList;
+    //userGroupId =>UserGroup
+    mapping (uint => UserGroup) userGroupList;
+    //processFlowId =>ProcessFlow
+    mapping (uint => ProcessFlow) processFlowList;
+    //processId=>Process
+    mapping (uint => Process) processList;
         
-        // Emit the transfer event.
-        //emit Transfer(_from, _to, _tokenId);
-    }
-    /// @dev Marks an address as being approved for transferFrom(), overwriting any previous
-    ///  approval. Setting _approved to address(0) clears all transfer approval.
-    ///  NOTE: _approve() does NOT send the Approval event. This is intentional because
-    ///  _approve() and transferFrom() are used together for putting tickets on auction, and
-    ///  there is no value in spamming the log with Approval events in that case.
-    function _approve(uint256 _tokenId, address _approved) internal {
-        ticketToApprovedIndex[_tokenId] = _approved;
-    }
-
-    /// @dev Checks if a given address currently has transferApproval for a particular Ticket.
-    /// @param _claimant the address we are confirming ticket is approved for.
-    /// @param _tokenId ticket id, only valid when > 0
-    function _approvedFor(address _claimant, uint256 _tokenId) internal view returns (bool) {
-        return ticketToApprovedIndex[_tokenId] == _claimant;
-    }
-
-    function _transferFrom(address _from,address _to,uint256 _tokenId) internal {
-        // Safety check to prevent against an unexpected 0x0 default.
-        require(_to != address(0));
-        // Disallow transfers to this contract to prevent accidental misuse.
-        // The contract should never own any tickets (except very briefly
-        // after a gen0 cat is created and before it goes on auction).
-        require(_to != address(this));
-        // Check for approval and valid ownership
-        require(_approvedFor(msg.sender, _tokenId));
-        require(_owns(_from, _tokenId));
-
-        // Reassign ownership (also clears pending approvals and emits Transfer event).
-        _transfer(_from, _to, _tokenId);
-    }
-
-    function _safeTransferFrom(address _to,address _from,uint256 _tokenId,bytes data) internal {
-        _transferFrom(_from,_to,_tokenId) ;
-        // if (_isContract(_to)) {
-        //   bytes4 tokenReceiverResponse = ERC721TokenReceiver(_to).onERC721Received.gas(50000)(
-        //     _from, _tokenId, _data
-        //   );
-        //   require(tokenReceiverResponse == bytes4(keccak256("onERC721Received(address,uint256,bytes)")));
-        // }
-    }
+    // --index--
+    //Userが属するUserGroupIdのリスト
+    mapping (uint => uint[]) userGroupIdByUserIdIndex;
+    //UserGroupが保有するUserIdのリスト
+    mapping (uint => uint[]) userIdByUserGroupIdIndex;
+    //ProcessFlowが持つProcessId群
+    mapping (uint => uint[]) processIdByProcessFlowIdIndex;
+    //processFlowが持つProcessNumberのステータス 添え字：processNumber 値：status
+    mapping (uint => uint[]) processStatusByProcessFlowIdIndex;
     
-    /// @notice Returns the number of Tickets owned by a specific address.
-    /// @param _owner The owner address to check.
-    /// @dev Required for ERC-721 compliance
-    function _balanceOf(address _owner) internal view returns (uint256 count) {
-        return ownedTicketList[_owner].length;
-    }
-
-    /// @notice Returns the number of Tickets owned by a specific address.
-    /// @param _owner The owner address to check.
-    /// @dev Required for ERC-721 compliance
-    function balanceOf(address _owner) external view returns (uint256 count) {
-        return _balanceOf(_owner);
-    }
-
-    function transfer(
-        address _to,
-        uint _tokenId
-    )
-        external
-    {
-        // Safety check to prevent against an unexpected 0x0 default. 
-        require(_to != address(0));
-        require(_to != address(this));
-
-        // You can only send your own ticket.
-        require(_owns(msg.sender, _tokenId));
-
-        // Reassign ownership, clear pending approvals, emit Transfer event.
-        _transfer(msg.sender, _to, _tokenId);
-    }
-
-    /// @notice Grant another address the right to transfer a specific Ticket via
-    ///  transferFrom(). This is the preferred flow for transfering NFTs to contracts.
-    /// @param _to The address to be granted transfer approval. Pass address(0) to
-    ///  clear all approvals.
-    /// @param _tokenId The ID of the Ticket that can be transferred if this call succeeds.
-    /// @dev Required for ERC-721 compliance.
-    function approve(
-        address _to,
-        uint256 _tokenId
-    )
-        external
-        payable
-    {
-        // Only an owner can grant transfer approval.
-        require(_owns(msg.sender, _tokenId));
-
-        // Register the approval (replacing any previous approval).
-        _approve(_tokenId, _to);
-
-        // Emit approval event.
-        //emit Approval(msg.sender, _to, _tokenId);
-    }
-
-
-    ///  @notice Gets the approved address to take ownership of a given token ID
-    ///  @param _tokenId uint256 ID of the token to query the approval of
-    ///  @return address currently approved to take ownership of the given token ID
-    function getApproved(uint256 _tokenId) external view returns (address)
-    {
-        return ticketToApprovedIndex[_tokenId];
-    }
-
-    /// @notice Enable or disable approval for a third party ("operator") to manage
-    ///  all of `msg.sender`'s assets.
-    /// @dev Emits the ApprovalForAll event. The contract MUST allow
-    ///  multiple operators per owner.
-    /// @param _operator Address to add to the set of authorized operators.
-    /// @param _approved True if the operator is approved, false to revoke approval
-    function setApprovalForAll(address _operator, bool _approved) external 
-    {
-        /// @todo approval for operator(third party)
-    }
+    // インデックスを持つ汎用的なLinked List
+    mapping (string => mapping(string => LinkedIndexlement)) linkedIndexList;
+    // LinkedIndexListのMaster
+    mapping (string => LinkedIndexMaster) linkedIndexListMaster;  
     
-    /// @notice Query if an address is an authorized operator for another address
-    /// @param _owner The address that owns the NFTs
-    /// @param _operator The address that acts on behalf of the owner
-    /// @return True if `_operator` is an approved operator for `_owner`, false otherwise
-    function isApprovedForAll(address _owner, address _operator) external view returns (bool)
-    {
-        /// @todo validating approval for operator(third party)
-    }
-
-    /// @notice Transfer a Ticket owned by another address, for which the calling address
-    ///  has previously been granted transfer approval by the owner.
-    /// @param _from The address that owns the Ticket to be transfered.
-    /// @param _to The address that should take ownership of the Ticket. Can be any address,
-    ///  including the caller.
-    /// @param _tokenId The ID of the Ticket to be transferred.
-    /// @dev Required for ERC-721 compliance.
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId
-    )
-        external
-        payable
-    {
-        _transferFrom(_from,_to,_tokenId) ;
-    }
-
-    /// @notice Transfers the ownership of an NFT from one address to another address
-    /// @dev Throws unless `msg.sender` is the current owner, an authorized
-    ///  operator, or the approved address for this NFT. Throws if `_from` is
-    ///  not the current owner. Throws if `_to` is the zero address. Throws if
-    ///  `_tokenId` is not a valid NFT. When transfer is complete, this function
-    ///  checks if `_to` is a smart contract (code size > 0). If so, it calls
-    ///  `onERC721Received` on `_to` and throws if the return value is not
-    ///  `bytes4(keccak256("onERC721Received(address,address,uint,bytes)"))`.
-    /// @param _from The current owner of the NFT
-    /// @param _to The new owner
-    /// @param _tokenId The NFT to transfer
-    /// @param data Additional data with no specified format, sent in call to `_to`
-    function safeTransferFrom(
-        address _from, 
-        address _to, 
-        uint _tokenId, 
-        bytes data) external payable 
-    {
-        _safeTransferFrom(_from,_to,_tokenId,data) ;
-    }
-
-    /// @notice Transfers the ownership of an NFT from one address to another address
-    /// @dev This works identically to the other function with an extra data parameter,
-    ///  except this function just sets data to ""
-    /// @param _from The current owner of the NFT
-    /// @param _to The new owner
-    /// @param _tokenId The NFT to transfer
-    function safeTransferFrom(
-        address _from, 
-        address _to, 
-        uint _tokenId) external payable
-    {
-        _safeTransferFrom(_from,_to,_tokenId,"") ;
-    }
-
-
-    /// @notice Returns the total number of Tickets currently in existence.
-    /// @dev Required for ERC-721 compliance.
-    function totalSupply() public view returns (uint) {
-        return tickets.length;
-    }
+    //counter
+    uint private userCounter = 0;
+	uint private requestCounter = 0;
+	uint private processFlowCounter = 0;
+	uint private processCounter = 0;
+// --変数定義 End--
     
-    /// @notice Returns the address currently assigned ownership of a given Ticket.
-    /// @dev Required for ERC-721 compliance.
-    function ownerOf(uint256 _tokenId)
-        external
-        view
-        returns (address owner)
-    {
-        owner = ticketToOwnerIndex[_tokenId];
+// --Public関数定義 Start--
+    // ログ
+    event remmitanceRequestLog(uint _requestId,uint _status);
 
-        //require(owner != address(0));
-    }
-    
-    /// @notice Returns a list of all Ticket IDs assigned to an address.
-    /// @param _owner The owner whose Tickets we are interested in.
-    /// @dev This method MUST NEVER be called by smart contract code. First, it's fairly
-    ///  expensive (it walks the entire Ticket array looking for tickets belonging to owner),
-    ///  but it also returns a dynamic array, which is only supported for web3 calls, and
-    ///  not contract-to-contract calls.
-    function tokensOfOwner(address _owner) external view returns(uint256[] ownerTokens) {
-        uint256 tokenCount = _balanceOf(_owner);
+    // ビジネスロジック
+    // 送金依頼登録
+	function newRemmitanceRequest(uint _requestType,bytes32 _branchNo,bytes32 _accountNo,bytes32 _accountHolderName,
+	    bytes32 _fromCurrency,bytes32 _toCurrency,bytes32 _rate,uint _fromAmount,uint _toAmount,bytes32 _applicationDate,
+	    bytes32 _valueDate,bytes32 _ipfsHashFirst,bytes32 _ipfsHashSeond) public returns(bool result) {
 
-        if (tokenCount == 0) {
-            // Return an empty array
-            return new uint256[](0);
-        } else {
-            uint256[] memory result = new uint256[](tokenCount);
-            uint256 totalTickets = totalSupply();
-            uint256 resultIndex = 0;
+        //送金依頼の登録
+        requestCounter++;
+        remmitanceRequestList[requestCounter].requestId = requestCounter ;
+        remmitanceRequestList[requestCounter].requestType = _requestType ;
+        remmitanceRequestList[requestCounter].branchNo = _branchNo ;
+        remmitanceRequestList[requestCounter].accountNo = _accountNo ;
+        remmitanceRequestList[requestCounter].accountHolderName = _accountHolderName ;
 
-            // We count on the fact that all cats have IDs starting at 1 and increasing
-            // sequentially up to the totalTickets count.
-            uint256 ticketId;
+        remmitanceRequestList[requestCounter].fromCurrency = _fromCurrency ;
+        remmitanceRequestList[requestCounter].toCurrency =  _toCurrency ;
+        remmitanceRequestList[requestCounter].rate = _rate ;
 
-            for (ticketId = 1; ticketId <= totalTickets; ticketId++) {
-                if (ticketToOwnerIndex[ticketId] == _owner) {
-                    result[resultIndex] = ticketId;
-                    resultIndex++;
-                }
+        remmitanceRequestList[requestCounter].fromAmount =  _fromAmount ;
+        remmitanceRequestList[requestCounter].toAmount =  _toAmount ;
+
+        remmitanceRequestList[requestCounter].applicationDate =  _applicationDate ;
+        remmitanceRequestList[requestCounter].valueDate =  _valueDate ;
+
+        remmitanceRequestList[requestCounter].timestamp = block.timestamp ;        
+
+        remmitanceRequestList[requestCounter].ipfsHashFirst =  _ipfsHashFirst ;
+        remmitanceRequestList[requestCounter].ipfsHashSecond =  _ipfsHashSeond ;
+        
+        //processflowの作成
+        processFlowCounter++ ;
+        processFlowList[processFlowCounter].processFlowId = processFlowCounter ;
+        processFlowList[processFlowCounter].requestId = requestCounter ;
+        
+        emit remmitanceRequestLog(requestCounter,1) ;
+        return true;
+	}
+	
+	function getRemmitanceRequest(uint _requestId) public constant returns(bytes32[14] remittanceRequest) {
+
+        //送金依頼の取得
+        remittanceRequest[0] = bytes32(remmitanceRequestList[_requestId].requestId) ;
+        remittanceRequest[1] = bytes32(remmitanceRequestList[_requestId].requestType) ;
+        remittanceRequest[2] = remmitanceRequestList[_requestId].branchNo ;
+        remittanceRequest[3] = remmitanceRequestList[_requestId].accountNo ;
+        remittanceRequest[4] = remmitanceRequestList[_requestId].accountHolderName ;
+        remittanceRequest[5] = remmitanceRequestList[_requestId].fromCurrency ;
+        remittanceRequest[6] = remmitanceRequestList[_requestId].toCurrency ;
+        remittanceRequest[7] = bytes32(remmitanceRequestList[_requestId].fromAmount) ;
+        remittanceRequest[8] = bytes32(remmitanceRequestList[_requestId].toAmount) ;
+        remittanceRequest[9] = remmitanceRequestList[_requestId].applicationDate ;
+        remittanceRequest[10] = remmitanceRequestList[_requestId].valueDate ;
+        remittanceRequest[11] = bytes32(remmitanceRequestList[_requestId].timestamp) ;
+        remittanceRequest[12] = remmitanceRequestList[_requestId].ipfsHashFirst ;
+        remittanceRequest[13] = remmitanceRequestList[_requestId].ipfsHashSecond ;
+
+        return remittanceRequest;
+	}	
+	// processFlowへのprocess追加
+	function putProcess(uint _processFlowId,uint _processNumber,uint _targetUserGroupId,uint[MAX_PREV_PROCESS_NUM] _prevProcessNumber,
+        bytes32 _ipfsHashFirst,bytes32 _ipfsHashSecond) public returns(bool result) {
+	    
+	    processCounter++ ;
+
+	    //processListへの追加
+	    processList[processCounter].processId = processCounter ;
+	    processList[processCounter].processFlowId = _processFlowId ;
+	    processList[processCounter].processNumber = _processNumber ;
+	    processList[processCounter].targetUserGroupId = _targetUserGroupId ;
+	    processList[processCounter].prevProcessNumber = _prevProcessNumber ;
+	    processList[processCounter].status = PROC_STATUS_WAITING ;
+	    processList[processCounter].ipfsHashFirst = _ipfsHashFirst ;
+	    processList[processCounter].ipfsHashSecond = _ipfsHashSecond ;
+
+        //processFlowとの関連付け
+        processIdByProcessFlowIdIndex[_processFlowId].push(processCounter) ;
+        
+        //UserGroupId・Statusとの関連付け
+        bytes32 key1 ;
+        //key1.concat(INDEX_TYPE_PROCESS_BY_USERGROUP_STATUS) ;
+        
+        //pushLinkedIndexList(INDEX_TYPE_PROCESS_BY_USERGROUP_STATUS + bytes4(_targetUserGroupId) + bytes1(PROC_STATUS_WAITING),
+        //bytes32(processCounter),processCounter) ;
+	    
+	    return true;
+	    
+	}
+	
+	//stringのconcat
+	function concatStr4(string _sourceStr1,string _sourceStr2,string _sourceStr3,string _sourceStr4) public constant returns (string){
+	    bytes memory sourceStr1 = bytes(_sourceStr1) ;
+	    bytes memory sourceStr2 = bytes(_sourceStr2) ;
+	    bytes memory sourceStr3 = bytes(_sourceStr3) ;
+	    bytes memory sourceStr4 = bytes(_sourceStr4) ;
+
+	    bytes memory concatStr ;
+	    
+	    //1byteずつ結合していく-> 4データソース分
+	    for(uint i_1=0 ;i_1 < sourceStr1.length; i_1++){
+	        concatStr[i_1] = sourceStr1[i_1] ;
+	    }
+	   // for(uint i_2=0 ;i_2 < sourceStr2.length; i_2++){
+	   //     concatStr[concatStr.length] = sourceStr2[i_2] ;
+	   // }
+	   // for(uint i_3=0 ;i_3 < sourceStr3.length; i_3++){
+	   //     concatStr[concatStr.length] = sourceStr3[i_3] ;
+	   // }
+	   // for(uint i_4=0 ;i_4 < sourceStr4.length; i_4++){
+	   //     concatStr[concatStr.length] = sourceStr4[i_4] ;
+	   // }
+	    
+	   return string(concatStr) ;
+	}
+	
+	
+	//stringのconcat
+	function concatStr(string _sourceStr,string _conTargetStr) public constant returns (string){
+	    bytes memory returnStr = bytes(_sourceStr) ;
+	    uint sourceStrLength = returnStr.length ;
+	    bytes memory conTargetStr = bytes(_conTargetStr) ;
+	    
+	    //1byteずつ結合していく
+	   // for(uint i=0 ;i < conTargetStr.length; i++){
+	   //     returnStr[sourceStrLength+i] = conTargetStr[i] ;
+	   // }
+	   returnStr[sourceStrLength+0] = conTargetStr[0] ;
+	   return string(returnStr) ;
+	}
+
+	//LinkedIndexListへのアクセス 全件の取得
+	function getLinkedIndexListElements(uint _key1) public constant returns(uint[] resultIndexList){
+        //最初の要素から取得
+        uint memory currentElementKey ;
+        currentElementKey = linkedIndexListMaster[_key1].firstElementKey ;
+	  
+	    //一度に返す要素数分LinkedListから結果リストに格納
+	    for(uint i = 0; i < resultIndexList.length ;i++){
+	        resultIndexList[i] = linkedIndexList[_key1][currentElementKey].index ;
+	        currentElementKey = linkedIndexList[_key1][currentElementKey].nextElementLink ;
+	    }
+	}
+	
+	//LinkedIndexListへのアクセス nextKey2:ページングなどリストを続きから取得する場合に前回の最後の要素
+	function getLinkedIndexListElementsWithPaging(string _key1,string _lastKey2) public constant returns(uint[10] resultIndexList,string lastKey2){
+	    // 最初に取得する要素を取得
+	    string memory currentElementKey ;
+	    if(bytes(_lastKey2).length == 0){
+	        //最初の要素から取得
+	        currentElementKey = linkedIndexListMaster[_key1].firstElementKey ;
+	    }else{
+	        //続きの要素から取得
+	        currentElementKey = linkedIndexList[_key1][_lastKey2].nextElementLink ;	        
+	    }
+	    
+	    //一度に返す要素数分LinkedListから結果リストに格納
+	    for(uint i = 0; i < resultIndexList.length ;i++){
+	        resultIndexList[i] = linkedIndexList[_key1][currentElementKey].index ;
+	        //最後の要素はmappingのキーも返す(値を持つ要素の場合のみ格納)
+	        if( resultIndexList[i] != 0){
+	            lastKey2 = currentElementKey ;
+	        }
+	        currentElementKey = linkedIndexList[_key1][currentElementKey].nextElementLink ;
+	    }
+	}
+	function pushLinkedIndexList(string _key1,string _key2,uint _index) public returns(bool){
+	    //対象のIndexListのマスターから最後の要素を取得
+	    string memory lastElementKey = linkedIndexListMaster[_key1].lastElementKey;
+	    
+	    //今回が最初の要素の場合、最初の要素を更新
+	    if(bytes(linkedIndexListMaster[_key1].firstElementKey).length == 0){
+	        linkedIndexListMaster[_key1].firstElementKey = _key2 ;
+	    }else{
+	        //最初の要素じゃない場合、前の要素を更新
+	        linkedIndexList[_key1][lastElementKey].nextElementLink = _key2 ;
+	    }
+	    
+	    //要素を追加
+	    linkedIndexList[_key1][_key2].prevElementLink = lastElementKey ;
+	    linkedIndexList[_key1][_key2].nextElementLink = "";
+	    linkedIndexList[_key1][_key2].index = _index;
+	    
+	    //最後の要素を更新
+	    linkedIndexListMaster[_key1].lastElementKey = _key2 ;
+	    
+	    return true ;
+	    
+	}
+	function removeLinkedIndexList(string _key1,string _key2) public returns(bool){
+	    //対象のIndexListの前後のリンクを付け替える
+	    string memory prevElementLink = linkedIndexList[_key1][_key2].prevElementLink;
+	    string memory nextElementLink = linkedIndexList[_key1][_key2].nextElementLink;
+
+        //削除対象の要素が最初の要素の場合
+        if(keccak256(linkedIndexListMaster[_key1].firstElementKey) == keccak256(_key2)){
+            //次の要素があれば、最初の要素を更新する
+            if(bytes(nextElementLink).length == 0){
+            }else{
+                linkedIndexListMaster[_key1].firstElementKey = nextElementLink ;
             }
-
-            return result;
+        }else{
+    	    //前の要素のリンク付け替え
+    	    linkedIndexList[_key1][prevElementLink].nextElementLink = nextElementLink ;            
         }
-    }
 
-    /// @notice Returns a Ticket Information of given ID
-    /// @param _ticketId givenId
-    /// @dev This method MUST NEVER be called by smart contract code. First, it's fairly
-    ///  expensive (it walks the entire Ticket array looking for tickets belonging to owner),
-    ///  but it also returns a dynamic array, which is only supported for web3 calls, and
-    ///  not contract-to-contract calls.
-    function getTicketInfoById(uint _ticketId) external view returns(bytes32[7] ticketInfo) {
-        //ticketIdは1から始めるので、添え字は-1
-        uint ticketIndex = _ticketId-1 ;
+        //削除対象の要素が最後の要素の場合
+        if(keccak256(linkedIndexListMaster[_key1].lastElementKey) == keccak256(_key2)){
+            //前の要素があれば、最後の要素を更新する
+            if(bytes(prevElementLink).length == 0){
+            }else{
+                linkedIndexListMaster[_key1].lastElementKey = prevElementLink ;
+            }            
+        }else{
+    	    //次の要素のリンク付け替え
+    	    linkedIndexList[_key1][nextElementLink].prevElementLink = prevElementLink ;
+        }
+	    
+	    //解放
+	    delete linkedIndexList[_key1][_key2] ;
+	    
+	    return true ;
+	}
+	
+	//自分が所属するUserGroupが持つ処理待ちのプロセスの一覧を取得
+	function getMyProcessList() public constant returns(uint[]){
+	    uint userGroupId = userGroupIdByUserIdIndex[]
+	    uint key1 = keccak256(bytes32(msg.sender),"","","")
+	    uint[] memory processIdList = getLinkedIndexListElements()
+	}
+
+    // indexリストの取得
+//     function getUserAccountIndexDesc(uint _userId,uint _startIndex) public constant returns(bytes32[10] accountIndexList ){
         
-        //チェック
-        require(tickets[ticketIndex].ticketId != 0) ;
-
-        ticketInfo[0] = (bytes32)(tickets[ticketIndex].ticketId) ;
-        ticketInfo[1] = (bytes32)(tickets[ticketIndex].ticketInternalId) ;
-        ticketInfo[2] = tickets[ticketIndex].ticketCategoryName ;
-        ticketInfo[3] = tickets[ticketIndex].IPFSHashFirst ;
-        ticketInfo[4] = tickets[ticketIndex].IPFSHashSecond ;
-        ticketInfo[5] = (bytes32)(tickets[ticketIndex].ticketIssuer) ;
-        ticketInfo[6] = bytes32(tickets[ticketIndex].issueTime) ;       
-
-        return ticketInfo ;
-    }
-
-
-    /// @notice issue a ticket token 
-    /// @param _ticketInternalId TicketIssuerが内部システムで管理している場合のID
-    /// @param _ticketCategoryName Ticketのカテゴリ(参照情報)
-    /// @param _IPFSHashFirst IPFSに格納している情報のハッシュにおける先頭32byte分
-    /// @param _IPFSHashSecond IPFSに格納している情報のハッシュにおける後半32byte分
-    /// @dev 基本的にはサービスプロバイダーの保有するアカウントだけがticketの発行を可能
-    function issueTicket(uint _ticketInternalId,bytes32 _ticketCategoryName,bytes32 _IPFSHashFirst,bytes32 _IPFSHashSecond) external {
-        // ticketIdは1からはじめる
-        uint newTicketId = tickets.length + 1;
+//         uint num = userAccountIndex[_userId].length;
+// 		uint counter = 0;
+// 		uint indexIndex = num - 1 - _startIndex;
+		
+// 		while (counter <= indexIndex) {
+// 			if (counter >= 10) {
+// 				 break;
+// 			}
+			
+// 			accountIndexList[counter] = userAccountIndex[_userId][indexIndex - counter];
+			
+// 			counter++;
+// 		}
+//     }
+//     // indexリストの取得
+//     function getUserTransactionIndexDesc(uint _userId,uint _startIndex) public constant returns(uint[10] transactionIndexList ){
         
-        // // チケット情報の作成
-        Ticket memory newTicket ;
-        newTicket.ticketId = newTicketId ;
-        newTicket.ticketInternalId = _ticketInternalId ;
-        newTicket.ticketCategoryName = _ticketCategoryName ;
-        newTicket.IPFSHashFirst = _IPFSHashFirst ;
-        newTicket.IPFSHashSecond = _IPFSHashSecond ;
-        newTicket.ticketIssuer = msg.sender ;
-        newTicket.issueTime = block.timestamp ;
-        newTicket.ticketStatus = TICKET_STATUS_ACTIVE ;
-        tickets.push(newTicket) ;
+//         uint num = userTransactionIndex[_userId].length;
+// 		uint counter = 0;
+// 		uint indexIndex = num - 1 - _startIndex;
+		
+// 		while (counter <= indexIndex) {
+// 			if (counter >= 10) {
+// 				 break;
+// 			}
+			
+// 			transactionIndexList[counter] = userTransactionIndex[_userId][indexIndex - counter];
+			
+// 			counter++;
+// 		}
+//     }
+
+// 	// ユーザの参照
+// 	function getUserInfo(uint _userId) public constant returns(bytes32[3] userInfo) {
+			
+// 		// ユーザ情報の参照
+// 		userInfo[0] = bytes32(userInfoList[_userId].userId);
+//         userInfo[1] = userInfoList[_userId].userName;
+//         userInfo[2] = userInfoList[_userId].userAddress;
+
+// 		return userInfo;
+// 	}
+//     // ユーザの登録
+// 	function registUserInfo(bytes32 _userName, bytes32 _userAddress) public returns(uint userId) {
+			
+// 		// ユーザ情報の登録
+// 		userCounter++;
+//         userInfoList[userCounter].userId = userCounter;
+// 		userInfoList[userCounter].userName = _userName;
+//         userInfoList[userCounter].userAddress = _userAddress;
+// 		userInfoList[userCounter].delFlg = false;
+		
+// 		return userInfoList[userCounter].userId;
+// 	}
+	
+// 	// ユーザの更新
+// 	function updateUserInfo(uint _userId,bytes32 _userName, bytes32 _userAddress) public returns(bool result) {
+		
+// 		// ユーザ登録していない場合はエラーを返す
+// 		if (checkUserExistence(_userId) == false) {
+// 			return false;
+// 		}
+		
+// 		// ユーザ情報の登録
+// 		userInfoList[_userId].userName = _userName;
+// 		userInfoList[_userId].userAddress = _userAddress;
+		
+// 		return true;
+// 	}
+	
+// 	// ユーザの削除
+// 	function deleteUserInfo(uint _userId) public returns(bool result) {
+		
+// 		// ユーザ登録していない場合はエラーを返す
+// 		if (checkUserExistence(_userId) == false) {
+// 			return false;
+// 		}
+		
+// 		// @ToDo 削除のための条件を追加
+		
+		
+// 		// ユーザ情報の更新
+// 		userInfoList[_userId].delFlg = true;
+		
+// 		return true;
+// 	}
+// 	// 口座の参照
+// 	function getAccountInfo(bytes32 _accountNo) public constant returns(bytes32[6] accountInfo) {
+			
+// 		// ユーザ情報の参照
+// 		accountInfo[0] = accountInfoList[_accountNo].accountNo;
+//         accountInfo[1] = accountInfoList[_accountNo].accountHolderName;
+// 		accountInfo[2] = bytes32(accountInfoList[_accountNo].accountType);
+// 		accountInfo[3] = accountInfoList[_accountNo].currency;
+// 		accountInfo[4] = bytes32(accountInfoList[_accountNo].balance);
+// 		accountInfo[5] = bytes32(accountInfoList[_accountNo].userId);
+
+//         return accountInfo;
+// 	}	
+//     // 口座開設
+// 	function registAccountInfo(bytes32 _accountNo,bytes32 _accountHolderName, uint _accountType,bytes32 _currency,uint _balance,uint _userId) public returns(bool result) {
+			
+// 		// 口座情報の登録
+//         accountInfoList[_accountNo].accountNo = _accountNo;
+// 		accountInfoList[_accountNo].accountHolderName = _accountHolderName;
+// 		accountInfoList[_accountNo].accountType = _accountType;
+//         accountInfoList[_accountNo].currency = _currency;
+//         accountInfoList[_accountNo].balance = _balance;
+//         accountInfoList[_accountNo].userId = _userId;
+//         accountInfoList[_accountNo].createTimestamp = block.timestamp;
+//         accountInfoList[_accountNo].updateTimestamp = block.timestamp;
+//         accountInfoList[_accountNo].delFlg = false;
         
-        _addTicket(msg.sender,newTicketId) ;
-    }
+//         userAccountIndex[_userId].push(_accountNo);
+		
+// 		return true;
+// 	}
+    
+//     //口座閉塞
+//     function deleteAccountInfo(bytes32 _accountNo) public returns(bool result) {
+			
+// 		// 口座の有無確認
+//         if(checkAccountExistence(_accountNo) == false){
+//             return false ;
+//         }
+        
+//         accountInfoList[_accountNo].delFlg = true;
+        
+// 		return true;
+// 	}
+
+//     // トランザクションの参照
+// 	function getTransactionInfo(uint _transactionId) public constant returns(bytes32[13] transactionInfo) {
+			
+// 		// ユーザ情報の参照
+// 		transactionInfo[0] = bytes32(transactionInfoList[_transactionId].transactionId);
+// 		transactionInfo[1] = bytes32(transactionInfoList[_transactionId].transactionStatus);
+// 		transactionInfo[2] = bytes32(transactionInfoList[_transactionId].transactionType);
+// 		transactionInfo[3] = transactionInfoList[_transactionId].fromAccountNo;
+// 		transactionInfo[4] = transactionInfoList[_transactionId].toAccountNo;
+// 		transactionInfo[5] = transactionInfoList[_transactionId].fromAccountHolderName;
+// 		transactionInfo[6] = transactionInfoList[_transactionId].toAccountHolderName;
+// 		transactionInfo[7] = transactionInfoList[_transactionId].fromCurrency;
+// 		transactionInfo[8] = transactionInfoList[_transactionId].toCurrency;
+//         transactionInfo[9] = transactionInfoList[_transactionId].rate;
+// 		transactionInfo[10] = bytes32(transactionInfoList[_transactionId].fromPrinc);
+// 		transactionInfo[11] = bytes32(transactionInfoList[_transactionId].toPrinc);
+// 		transactionInfo[12] = bytes32(transactionInfoList[_transactionId].timestamp);
+
+//         return transactionInfo;
+// 	}	
+
+//     // 振込
+// 	function transfer(uint _transactionType,bytes32 _fromAccountNo,bytes32 _toAccountNo,bytes32 _fromAccountHolderName,bytes32 _toAccountHolderName,bytes32 _fromCurrency,bytes32 _toCurrency,bytes32 _rate,uint _fromPrinc,uint _toPrinc) public returns(bool result) {
+			
+//         // 出金元の通貨チェック
+//         if(accountInfoList[_fromAccountNo].currency != _fromCurrency){
+//             return false ;            
+//         }
+//         // 出金元の残高チェック
+//         if(accountInfoList[_fromAccountNo].balance < _fromPrinc){
+//             return false ;
+//         }
+
+//         //トランザクションの登録
+//         transactionCounter++;
+//         transactionInfoList[transactionCounter].transactionId = transactionCounter ;
+//         transactionInfoList[transactionCounter].transactionStatus = 0 ;
+//         transactionInfoList[transactionCounter].transactionType = _transactionType ;
+
+//         transactionInfoList[transactionCounter].fromAccountNo = _fromAccountNo ;
+//         transactionInfoList[transactionCounter].toAccountNo = _toAccountNo ;
+
+//         transactionInfoList[transactionCounter].fromAccountHolderName = _fromAccountHolderName ;
+//         transactionInfoList[transactionCounter].toAccountHolderName = _toAccountHolderName ;
+
+//         transactionInfoList[transactionCounter].fromCurrency = _fromCurrency ;
+//         transactionInfoList[transactionCounter].toCurrency =  _toCurrency ;
+//         transactionInfoList[transactionCounter].rate = _rate ;
+
+//         transactionInfoList[transactionCounter].fromPrinc =  _fromPrinc ;
+//         transactionInfoList[transactionCounter].toPrinc =  _toPrinc ;
+
+//         transactionInfoList[transactionCounter].timestamp = block.timestamp ;        
+
+//         //残高の増減
+//         accountInfoList[_fromAccountNo].balance = accountInfoList[_fromAccountNo].balance - _fromPrinc;
+//         accountInfoList[_fromAccountNo].updateTimestamp = block.timestamp;
+//         accountInfoList[_toAccountNo].balance = accountInfoList[_toAccountNo].balance + _toPrinc;
+//         accountInfoList[_toAccountNo].updateTimestamp = block.timestamp;
+        
+//         //インデックスの登録
+//         userTransactionIndex[accountInfoList[_fromAccountNo].userId].push(transactionCounter);
+//         if(accountInfoList[_fromAccountNo].userId != accountInfoList[_toAccountNo].userId){
+//             userTransactionIndex[accountInfoList[_toAccountNo].userId].push(transactionCounter);        
+//         }
+        
+//         return true;
+// 	}
+    
+    
+ 
+// // --Public関数定義 End--
+
+// // --Private関数定義 Start--
+// 	function checkUserExistence(uint _userId) private constant returns (bool result) {
+// 		if (_userId != userInfoList[_userId].userId) {
+// 			return false;
+// 		}
+// 		if (userInfoList[_userId].delFlg) {
+// 			return false;
+// 		}
+// 		return true;
+// 	}
+	
+// 	function checkAccountExistence(bytes32 _accountNo) private constant returns (bool result) {
+// 		if (_accountNo != accountInfoList[_accountNo].accountNo) {
+// 			return false;
+// 		}
+// 		if (accountInfoList[_accountNo].delFlg) {
+// 			return false;
+// 		}
+// 		return true;
+// 	}    
+// --Private関数定義 End--
 }
