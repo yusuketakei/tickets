@@ -227,7 +227,7 @@ contract EMCUR {
         return true;
 	}
 	
-	function getRemmitanceRequest(uint _requestId) public constant returns(bytes32[14] remittanceRequest) {
+	function getRemmitanceRequest(uint _requestId) public view returns(bytes32[14] remittanceRequest) {
 
         //送金依頼の取得
         remittanceRequest[0] = bytes32(remmitanceRequestList[_requestId].requestId) ;
@@ -278,7 +278,7 @@ contract EMCUR {
 	}
 	
 	//stringのconcat
-	function concatStr4(string _sourceStr1,string _sourceStr2,string _sourceStr3,string _sourceStr4) public constant returns (string){
+	function concatStr4(string _sourceStr1,string _sourceStr2,string _sourceStr3,string _sourceStr4) public view returns (string){
 	    bytes memory sourceStr1 = bytes(_sourceStr1) ;
 	    bytes memory sourceStr2 = bytes(_sourceStr2) ;
 	    bytes memory sourceStr3 = bytes(_sourceStr3) ;
@@ -305,7 +305,7 @@ contract EMCUR {
 	
 	
 	//stringのconcat
-	function concatStr(string _sourceStr,string _conTargetStr) public constant returns (string){
+	function concatStr(string _sourceStr,string _conTargetStr) public view returns (string){
 	    bytes memory returnStr = bytes(_sourceStr) ;
 	    uint sourceStrLength = returnStr.length ;
 	    bytes memory conTargetStr = bytes(_conTargetStr) ;
@@ -319,7 +319,7 @@ contract EMCUR {
 	}
 
 	//LinkedIndexListへのアクセス 全件の取得
-	function getLinkedIndexListElements(uint _key1) public constant returns(uint[] resultIndexList){
+	function getLinkedIndexListElements(uint _key1) public view returns(uint[] resultIndexList){
         //最初の要素から取得
         uint memory currentElementKey ;
         currentElementKey = linkedIndexListMaster[_key1].firstElementKey ;
@@ -332,7 +332,7 @@ contract EMCUR {
 	}
 	
 	//LinkedIndexListへのアクセス nextKey2:ページングなどリストを続きから取得する場合に前回の最後の要素
-	function getLinkedIndexListElementsWithPaging(string _key1,string _lastKey2) public constant returns(uint[10] resultIndexList,string lastKey2){
+	function getLinkedIndexListElementsWithPaging(string _key1,string _lastKey2) public view returns(uint[10] resultIndexList,string lastKey2){
 	    // 最初に取得する要素を取得
 	    string memory currentElementKey ;
 	    if(bytes(_lastKey2).length == 0){
@@ -412,14 +412,14 @@ contract EMCUR {
 	}
 	
 	//自分が所属するUserGroupが持つ処理待ちのプロセスの一覧を取得
-	function getMyProcessList() public constant returns(uint[]){
-	    uint userGroupId = userGroupIdByUserIdIndex[]
-	    uint key1 = keccak256(bytes32(msg.sender),"","","")
-	    uint[] memory processIdList = getLinkedIndexListElements()
+	function getMyProcessList() public view returns(uint[]){
+	    uint userGroupId = userGroupIdByUserIdIndex[] ;
+	    uint key1 = keccak256(bytes32(msg.sender),"","","") ;
+	    uint[] memory processIdList = getLinkedIndexListElements() ;
 	}
 
     // indexリストの取得
-//     function getUserAccountIndexDesc(uint _userId,uint _startIndex) public constant returns(bytes32[10] accountIndexList ){
+//     function getUserAccountIndexDesc(uint _userId,uint _startIndex) public view returns(bytes32[10] accountIndexList ){
         
 //         uint num = userAccountIndex[_userId].length;
 // 		uint counter = 0;
@@ -436,7 +436,7 @@ contract EMCUR {
 // 		}
 //     }
 //     // indexリストの取得
-//     function getUserTransactionIndexDesc(uint _userId,uint _startIndex) public constant returns(uint[10] transactionIndexList ){
+//     function getUserTransactionIndexDesc(uint _userId,uint _startIndex) public view returns(uint[10] transactionIndexList ){
         
 //         uint num = userTransactionIndex[_userId].length;
 // 		uint counter = 0;
@@ -454,7 +454,7 @@ contract EMCUR {
 //     }
 
 // 	// ユーザの参照
-// 	function getUserInfo(uint _userId) public constant returns(bytes32[3] userInfo) {
+// 	function getUserInfo(uint _userId) public view returns(bytes32[3] userInfo) {
 			
 // 		// ユーザ情報の参照
 // 		userInfo[0] = bytes32(userInfoList[_userId].userId);
@@ -508,7 +508,7 @@ contract EMCUR {
 // 		return true;
 // 	}
 // 	// 口座の参照
-// 	function getAccountInfo(bytes32 _accountNo) public constant returns(bytes32[6] accountInfo) {
+// 	function getAccountInfo(bytes32 _accountNo) public view returns(bytes32[6] accountInfo) {
 			
 // 		// ユーザ情報の参照
 // 		accountInfo[0] = accountInfoList[_accountNo].accountNo;
@@ -553,7 +553,7 @@ contract EMCUR {
 // 	}
 
 //     // トランザクションの参照
-// 	function getTransactionInfo(uint _transactionId) public constant returns(bytes32[13] transactionInfo) {
+// 	function getTransactionInfo(uint _transactionId) public view returns(bytes32[13] transactionInfo) {
 			
 // 		// ユーザ情報の参照
 // 		transactionInfo[0] = bytes32(transactionInfoList[_transactionId].transactionId);
@@ -626,7 +626,7 @@ contract EMCUR {
 // // --Public関数定義 End--
 
 // // --Private関数定義 Start--
-// 	function checkUserExistence(uint _userId) private constant returns (bool result) {
+// 	function checkUserExistence(uint _userId) private view returns (bool result) {
 // 		if (_userId != userInfoList[_userId].userId) {
 // 			return false;
 // 		}
@@ -636,7 +636,7 @@ contract EMCUR {
 // 		return true;
 // 	}
 	
-// 	function checkAccountExistence(bytes32 _accountNo) private constant returns (bool result) {
+// 	function checkAccountExistence(bytes32 _accountNo) private view returns (bool result) {
 // 		if (_accountNo != accountInfoList[_accountNo].accountNo) {
 // 			return false;
 // 		}
